@@ -126,7 +126,7 @@ def print_total_citations(url):
 
     page1 = get_soup(url)
     result = "123"
-    result += str(page1.find('h2'))
+    result += page1.text
     """ list_ = page1.find('h2').text.split()
     institution = ' '.join(list_[0:-2])
     result = 'Institution &ensp; &ensp; : '+institution+'<br>'
