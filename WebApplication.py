@@ -125,27 +125,30 @@ def is_lastpage(soup):
 def print_total_citations(url):
 
     page1 = get_soup(url)
-    result = "123"
-    result += page1.text
-    list_ = page1.find('h2').text.split()
-    institution = ' '.join(list_[0:-2])
-    result = 'Institution &ensp; &ensp; : '+institution+'<br>'
+    result = ""
+    try:
+        list_ = page1.find('h2').text.split()
+        institution = ' '.join(list_[0:-2])
+        result = 'Institution &ensp; &ensp; : '+institution+'<br>'
 
-    # SKIPPING THE FIRST 20 ENTRIES (FIRST 2 PAGES)
-    page2 = get_nextpage(url, page1, 10)
-    page3 = get_nextpage(url, page2, 20)
+        # SKIPPING THE FIRST 20 ENTRIES (FIRST 2 PAGES)
+        page2 = get_nextpage(url, page1, 10)
+        page3 = get_nextpage(url, page2, 20)
 
-    currentpage = page3
-    total_citation_count = 0
+        currentpage = page3
+        total_citation_count = 0
 
-    # FROM THE ENTRY 21 TO 210
-    for index in range(30, 31, 10):  # 211
-        if is_lastpage(currentpage):
-            break
-        total_citation_count += get_citations(currentpage)
-        currentpage = get_nextpage(url, currentpage, index)
+        # FROM THE ENTRY 21 TO 210
+        for index in range(30, 31, 10):  # 211
+            if is_lastpage(currentpage):
+                break
+            total_citation_count += get_citations(currentpage)
+            currentpage = get_nextpage(url, currentpage, index)
 
-    result += "Total citations : "+str(total_citation_count)+"<br><br>"
+        result += "Total citations : "+str(total_citation_count)+"<br><br>"
+
+    except Exception:
+        pass
     return result
 
 
