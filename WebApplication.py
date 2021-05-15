@@ -155,23 +155,25 @@ def print_total_citations(url):
 def print_total_citations_csv(url):
 
     page1 = get_soup(url)
-    list_ = page1.find('h2').text.split()
-    institution = ' '.join(list_[0:-2])
-
-    filename = '_'.join(institution.split())+'_Google_Scholar.csv'
-    file = csv.writer(open(filename, 'w', newline=''))
-    file.writerow([institution])
-    file.writerow(['Profile', 'Verified Email', 'Citations', 'URL'])
-
-    currentpage = page1
-    index = 10
-
+    filename = ""
     try:
+        list_ = page1.find('h2').text.split()
+        institution = ' '.join(list_[0:-2])
+
+        filename = '_'.join(institution.split())+'_Google_Scholar.csv'
+        file = csv.writer(open(filename, 'w', newline=''))
+        file.writerow([institution])
+        file.writerow(['Profile', 'Verified Email', 'Citations', 'URL'])
+
+        currentpage = page1
+        index = 10
+
         while (True):
             get_citations(currentpage, file)
             currentpage = get_nextpage(url, currentpage, index)
             index += 10
-    except IndexError:
+
+    except Exception:
         pass
 
     return filename
