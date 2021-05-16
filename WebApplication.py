@@ -139,7 +139,7 @@ def print_total_citations(url):
         total_citation_count = 0
 
         # FROM THE ENTRY 21 TO 210
-        for index in range(30, 31, 10):  # 211
+        for index in range(30, 211, 10):  # 31
             if is_lastpage(currentpage):
                 break
             total_citation_count += get_citations(currentpage)
