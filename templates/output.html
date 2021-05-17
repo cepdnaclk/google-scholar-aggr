@@ -2,11 +2,12 @@
 <html>
 
 <head>
-    <title>Output</title>
-    <link rel="stylesheet" href="styles.css" type="text/css">
+    <title>GS Analysis Tool | Output</title>
+    <!-- <link rel="stylesheet" href="styles.css" type="text/css"> -->
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='styles/styles.css') }}">
 </head>
 
-<body leftmargin="30">
+<body>
     <p>{{ output|safe }}</p>
 </body>
 
