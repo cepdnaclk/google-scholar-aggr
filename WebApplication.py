@@ -24,11 +24,17 @@ app = Flask(__name__)
 def index():
 
     if request.method == 'POST':
+
+        # OPTION 1 : SINGLE OUTPUT
         if request.form.get("submit_url"):
             url = request.form['url1']
             return redirect(url_for("output", key=get_key(url)))
+
+        # OPTION 2 : DEFAULT OUTPUT
         elif request.form.get("view_all"):
             return redirect(url_for("default_output"))
+
+        # OPTION 3 : PROFILE DETAILS FILE GENERATION
         else:
             url = request.form['url2']
             return redirect(url_for("generate_csv", key=get_key(url)))
@@ -39,6 +45,7 @@ def index():
 
 @app.route('/output/<key>')
 def output(key):
+
     message = print_total_citations(INSTITUTE_URL_PORTION+key)
     return render_template('output.html', output=message)
 
@@ -52,12 +59,15 @@ institutions = [
     # University of Kelaniya
     'https://scholar.google.com/citations?view_op=view_org&hl=en&org=2389008742073115052',
     # University of Moratuwa
-    'https://scholar.google.com/citations?view_op=view_org&hl=en&org=1702257947625510955'
+    'https://scholar.google.com/citations?view_op=view_org&hl=en&org=1702257947625510955',
+    # University of Sri Jayewardenepura
+    'https://scholar.google.com/citations?view_op=view_org&hl=en&org=4241313714207127809'
 ]
 
 
 @app.route('/default')
 def default_output():
+
     message = ""
     for institution in institutions:
         message += print_total_citations(institution)
@@ -66,11 +76,18 @@ def default_output():
 
 @app.route('/csv/<key>')
 def generate_csv(key):
+
+    # GENERATES THE CSV FILE AND SENDS IT TO THE CLIENT
+
     filename = print_total_citations_csv(INSTITUTE_URL_PORTION+key)
     return send_file(filename, as_attachment=True, cache_timeout=0)
 
 
 def get_key(url):
+
+    # RETURNS THE LAST POSTION OF THE URL; i.e. 12610868586512439209 FOR;
+    # https://scholar.google.com/citations?view_op=view_org&hl=en&org=12610868586512439209
+
     s = url.split("=")
     return s[-1]
 
@@ -86,6 +103,10 @@ def get_nextpage(homepage_url, soup, num):
 
     key = soup.find('button', class_=NEXTPAGE_BUTTON_CLASSNAME).get(
         'onclick').split('\\')[9]
+
+    # GETS THE ID OF THE LAST SCHOLAR OF THE PAGE; i.e. CkZeALfx__8J FOR;
+    # https://scholar.google.com/citations?view_op=view_org&hl=en&org=12610868586512439209&after_author=CkZeALfx__8J&astart=10
+
     next_url = homepage_url+'&after_author='+key[3:]+'&astart='+str(num)
     nextpage_soup = get_soup(next_url)
     return nextpage_soup
@@ -93,6 +114,10 @@ def get_nextpage(homepage_url, soup, num):
 
 def get_citations(soup, file=None):
 
+    # SINCE PYTHON IS DYNAMICALLY TYPED, OPTIONAL ARGUMENTS CAN BE PASSED
+
+    # OPTION 1 : SINGLE OUTPUT AND
+    # OPTION 2 : DEFAULT OUTPUT
     if file is None:
         citation_count = 0
         citations = soup.find_all('div', class_=CITATION_CLASSNAME)
@@ -101,16 +126,26 @@ def get_citations(soup, file=None):
             citation_count += int(citation.text.split()[-1])
         return citation_count
 
+    # OPTION 3 : PROFILE DETAILS FILE GENERATION
     else:
         citations = soup.find_all('div', class_=PROFILE_CARD_CLASSNAME)
 
+        # FOR EACH PROFILE CARD...
         for citation in citations:
+
             name = citation.find('h3').text
             url = 'https://scholar.google.com'+citation.find('a').get('href')
             email = citation.find(
                 'div', class_=EMAIL_CLASSNAME).text.split()[-1]
-            cit = citation.find(
-                'div', class_=CITATION_CLASSNAME).text.split()[-1]
+
+            try:
+                cit = citation.find(
+                    'div', class_=CITATION_CLASSNAME).text.split()[-1]
+
+            # WHEN THE CITATIONS ARE NOT DISPLAYED...
+            except IndexError:
+                cit = '0'
+
             file.writerow((name, email, cit, url))
 
 
@@ -126,29 +161,26 @@ def print_total_citations(url):
 
     page1 = get_soup(url)
     result = ""
-    try:
-        list_ = page1.find('h2').text.split()
-        institution = ' '.join(list_[0:-2])
-        result = 'Institution &ensp; &ensp; : '+institution+'<br>'
+    list_ = page1.find('h2').text.split()
+    institution = ' '.join(list_[0:-2])
+    result = 'Institution &ensp; &ensp; : '+institution+'<br>'
 
-        # SKIPPING THE FIRST 20 ENTRIES (FIRST 2 PAGES)
-        page2 = get_nextpage(url, page1, 10)
-        page3 = get_nextpage(url, page2, 20)
+    # SKIPPING FIRST 20 ENTRIES (FIRST 2 PAGES)
+    page2 = get_nextpage(url, page1, 10)
+    page3 = get_nextpage(url, page2, 20)
 
-        currentpage = page3
-        total_citation_count = 0
+    currentpage = page3
+    total_citation_count = 0
 
-        # FROM THE ENTRY 21 TO 210
-        for index in range(30, 211, 10):  # 31
-            if is_lastpage(currentpage):
-                break
-            total_citation_count += get_citations(currentpage)
-            currentpage = get_nextpage(url, currentpage, index)
+    # FROM ENTRY 21 TO 210
+    for index in range(30, 31, 10):  # 31 < 211
+        if is_lastpage(currentpage):
+            break
+        total_citation_count += get_citations(currentpage)
+        currentpage = get_nextpage(url, currentpage, index)
 
-        result += "Total citations : "+str(total_citation_count)+"<br><br>"
+    result += "Total citations : "+str(total_citation_count)+"<br><br>"
 
-    except Exception:
-        pass
     return result
 
 
@@ -156,25 +188,28 @@ def print_total_citations_csv(url):
 
     page1 = get_soup(url)
     filename = ""
+    list_ = page1.find('h2').text.split()
+    institution = ' '.join(list_[0:-2])
+
+    filename = '_'.join(institution.split())+'_Google_Scholar.csv'
+    f = open(filename, 'w', newline='', encoding="utf-8")
+    file = csv.writer(f)
+
+    file.writerow([institution])
+    file.writerow(['Profile', 'Verified Email', 'Citations', 'URL'])
+
+    currentpage = page1
+    index = 10
+
     try:
-        list_ = page1.find('h2').text.split()
-        institution = ' '.join(list_[0:-2])
-
-        filename = '_'.join(institution.split())+'_Google_Scholar.csv'
-        file = csv.writer(open(filename, 'w', newline=''))
-        file.writerow([institution])
-        file.writerow(['Profile', 'Verified Email', 'Citations', 'URL'])
-
-        currentpage = page1
-        index = 10
-
         while (True):
             get_citations(currentpage, file)
             currentpage = get_nextpage(url, currentpage, index)
             index += 10
 
-    except Exception:
-        pass
+    # AFTER THE LAST ENTRY OF THE LAST PAGE...
+    except AttributeError:
+        f.close()
 
     return filename
 

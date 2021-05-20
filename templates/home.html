@@ -3,7 +3,6 @@
 
 <head>
     <title>GS Analysis Tool | Home</title>
-    <!-- <link rel="stylesheet" href="styles.css" type="text/css"> -->
     <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='styles/styles.css') }}">
 </head>
 
@@ -13,6 +12,7 @@
 
     <script>
         function validate_form(form) {
+
             var url;
             if (form.name == "form1") {
                 url = document.forms[form.name]["url1"].value;
@@ -20,8 +20,12 @@
             else {
                 url = document.forms[form.name]["url2"].value;
             }
+
+            // CHECKS WHETHER THE URL IS FROM GOOGLE SCHOLAR
+            // IF NOT, ALERTS THE USER AND RETURNS FALSE TO HOLD THE SUBMISSION
+
             if (url.substring(0, 64).localeCompare("https://scholar.google.com/citations?view_op=view_org&hl=en&org=")) {
-                alert("Enter a correct Google Scholar URL!");
+                alert("Enter a valid Google Scholar URL! Something like the following;\nhttps://scholar.google.com/citations?view_op=view_org&hl=en...");
                 return false;
             }
         }
@@ -30,8 +34,7 @@
     <form name="form1" action="#" method="POST" onsubmit="return validate_form(this)">
 
         <p>Enter the URL of the Institute to get the total citations count (for Webometrics Rankings)</p>
-        <input type="text" name="url1" size="85"
-            placeholder="https://scholar.google.com/citations?view_op=view_org&hl=en&org=xxxxxxxxxxxxxxxxxxxx" required>
+        <input type="text" name="url1" size="85" required>
         <input type="submit" name="submit_url" value="View">
 
     </form>
@@ -44,9 +47,8 @@
     <form name="form3" action="#" method="POST" onsubmit="return validate_form(this)">
 
         <p>Enter the URL of the Institute to download the CSV file containing the details of the Scholars</p>
-        <input type="text" name="url2" size="85"
-            placeholder="https://scholar.google.com/citations?view_op=view_org&hl=en&org=xxxxxxxxxxxxxxxxxxxx" required>
-        <input type="submit" name="download_csv" value="Download CSV">
+        <input type="text" name="url2" size="85" required>
+        <input type="submit" name="download_csv" value="Download">
 
     </form>
 </body>
