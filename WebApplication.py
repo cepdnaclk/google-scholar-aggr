@@ -174,7 +174,7 @@ def print_total_citations(url):
 
     try:
         # FROM ENTRY 21 TO 210
-        for index in range(30, 211, 10):
+        for index in range(30, 31, 10):
             """ if is_lastpage(currentpage):
                 break """
             total_citation_count += get_citations(currentpage)
