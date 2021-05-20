@@ -149,12 +149,12 @@ def get_citations(soup, file=None):
             file.writerow((name, email, cit, url))
 
 
-def is_lastpage(soup):
+""" def is_lastpage(soup):
 
     if soup.find('div', class_=CITATION_CLASSNAME).text:
         return False
     else:
-        return True
+        return True """
 
 
 def print_total_citations(url):
@@ -172,12 +172,17 @@ def print_total_citations(url):
     currentpage = page3
     total_citation_count = 0
 
-    # FROM ENTRY 21 TO 210
-    for index in range(30, 211, 10):  # 31 < 211
-        if is_lastpage(currentpage):
-            break
-        total_citation_count += get_citations(currentpage)
-        currentpage = get_nextpage(url, currentpage, index)
+    try:
+        # FROM ENTRY 21 TO 210
+        for index in range(30, 211, 10):
+            """ if is_lastpage(currentpage):
+                break """
+            total_citation_count += get_citations(currentpage)
+            currentpage = get_nextpage(url, currentpage, index)
+
+    # WHEN THE CITATIONS ARE NOT DISPLAYED...
+    except IndexError:
+        pass
 
     result += "Total citations : "+str(total_citation_count)+"<br><br>"
 
