@@ -3,7 +3,7 @@
 # PREREQUISITES:
 #   1) Python 3.x
 #   2) INSTALL LIBRARIES requests, lxml AND beautifulsoup4
-#   3) INSTALL Flask web framework
+#   3) INSTALL Flask WEB FRAMEWORK
 
 from flask import Flask, render_template, request, redirect, url_for, send_file
 import sys
@@ -220,4 +220,4 @@ def print_total_citations_csv(url):
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=False)
