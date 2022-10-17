@@ -16,6 +16,7 @@ CITATION_CLASSNAME = 'gs_ai_cby'
 INSTITUTE_URL_PORTION = "https://scholar.google.com/citations?view_op=view_org&hl=en&org="
 PROFILE_CARD_CLASSNAME = 'gs_ai_t'
 EMAIL_CLASSNAME = 'gs_ai_eml'
+LABEL_CLASSNAME = 'gs_ai_one_int'
 
 app = Flask(__name__)
 
@@ -32,7 +33,8 @@ def index():
 
         # OPTION 2 : DEFAULT OUTPUT
         elif request.form.get("view_all"):
-            return redirect(url_for("default_output"))
+            # return redirect(url_for("default_output"))
+            return redirect(url_for("test"))
 
         # OPTION 3 : PROFILE DETAILS FILE GENERATION
         else:
@@ -74,6 +76,13 @@ def default_output():
     return render_template('output.html', output=message)
 
 
+@app.route('/test')
+def test():
+    message = "test : "
+    message += test_method()
+    return render_template('output.html', output=message)
+
+
 @app.route('/csv/<key>')
 def generate_csv(key):
 
@@ -94,7 +103,12 @@ def get_key(url):
 
 def get_soup(url):
 
-    html_text = requests.get(url).text
+    try:
+        html_text = requests.get(url).text
+    except requests.exceptions.ConnectionError:
+        print('Connection error')
+        sys.exit(0)
+
     soup = BeautifulSoup(html_text, 'lxml')
     return soup
 
@@ -108,6 +122,7 @@ def get_nextpage(homepage_url, soup, num):
     # https://scholar.google.com/citations?view_op=view_org&hl=en&org=12610868586512439209&after_author=CkZeALfx__8J&astart=10
 
     next_url = homepage_url+'&after_author='+key[3:]+'&astart='+str(num)
+    print(next_url)
     nextpage_soup = get_soup(next_url)
     return nextpage_soup
 
@@ -174,7 +189,7 @@ def print_total_citations(url):
 
     try:
         # FROM ENTRY 21 TO 210
-        for index in range(30, 211, 10):
+        for index in range(30, 231, 10): #211
             """ if is_lastpage(currentpage):
                 break """
             total_citation_count += get_citations(currentpage)
@@ -219,5 +234,48 @@ def print_total_citations_csv(url):
     return filename
 
 
+def get_citations_test(soup):
+
+    citations = soup.find_all('div', class_=PROFILE_CARD_CLASSNAME)
+    arr = [1]
+    label = 'temp'
+    # FOR EACH PROFILE CARD...
+    for citation in citations:
+        # name = citation.find('h3').text
+        try:
+            cit = citation.find(
+                'div', class_=CITATION_CLASSNAME).text.split()[-1]
+        # WHEN THE CITATIONS ARE NOT DISPLAYED...
+        except IndexError:
+            cit = '0'
+        try:
+            label = citation.find_all('a', class_=LABEL_CLASSNAME)
+        except Exception as e:
+            print('Unexpected Error!', e.__class__)
+
+        # arr.append(label[0])
+        try:
+            print(label[0].text)
+        except IndexError:
+            pass
+    return arr
+
+
+def test_method():
+    s = ""
+    url = 'https://scholar.google.com/citations?view_op=view_org&hl=en&org=12610868586512439209'
+    page1 = get_soup(url)
+    """ list_ = page1.find('h2').text.split()
+    institution = ' '.join(list_[0:-2]) """
+    currentpage = page1
+    # index = 10
+    arr = get_citations_test(currentpage)
+    """ currentpage = get_nextpage(url, currentpage, index)
+    index += 10 """
+    for x in arr:
+        s += str(x)+' '
+    return s
+
+
 if __name__ == "__main__":
-    app.run(debug=False)
+    app.run(debug=True)
