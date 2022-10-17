@@ -17,6 +17,9 @@ INSTITUTE_URL_PORTION = "https://scholar.google.com/citations?view_op=view_org&h
 PROFILE_CARD_CLASSNAME = 'gs_ai_t'
 EMAIL_CLASSNAME = 'gs_ai_eml'
 LABEL_CLASSNAME = 'gs_ai_one_int'
+PAPER_CLASSNAME = 'gsc_a_at'
+BACKGROUND_CLASSNAME = 'gsh_csp'
+PAPER_LINK_CLASSNAME = 'gsc_oci_title_link'
 
 app = Flask(__name__)
 
@@ -37,8 +40,13 @@ def index():
             return redirect(url_for("test"))
 
         # OPTION 3 : PROFILE DETAILS FILE GENERATION
-        else:
+        elif request.form.get("download_csv"):
             url = request.form['url2']
+            return redirect(url_for("generate_csv", key=get_key(url)))
+
+        # OPTION 4 : ARTICLE DETAILS FILE GENERATION
+        else:
+            url = request.form['url3']
             return redirect(url_for("generate_csv", key=get_key(url)))
 
     else:
@@ -92,6 +100,15 @@ def generate_csv(key):
     return send_file(filename, as_attachment=True, cache_timeout=0)
 
 
+@app.route('/csv_all/<key>')
+def generate_csv_all(key):
+
+    # GENERATES THE CSV FILE AND SENDS IT TO THE CLIENT
+
+    filename = get_paper_details_csv(INSTITUTE_URL_PORTION+key)
+    return send_file(filename, as_attachment=True, cache_timeout=0)
+
+
 def get_key(url):
 
     # RETURNS THE LAST POSTION OF THE URL; i.e. 12610868586512439209 FOR;
@@ -122,7 +139,7 @@ def get_nextpage(homepage_url, soup, num):
     # https://scholar.google.com/citations?view_op=view_org&hl=en&org=12610868586512439209&after_author=CkZeALfx__8J&astart=10
 
     next_url = homepage_url+'&after_author='+key[3:]+'&astart='+str(num)
-    print(next_url)
+    # print(next_url)
     nextpage_soup = get_soup(next_url)
     return nextpage_soup
 
@@ -162,6 +179,36 @@ def get_citations(soup, file=None):
                 cit = '0'
 
             file.writerow((name, email, cit, url))
+
+
+def get_paper_details(soup, file):
+
+    citations = soup.find_all('div', class_=PROFILE_CARD_CLASSNAME)
+
+    # FOR EACH PROFILE CARD...
+    # for citation in citations:
+
+    name = citations[0].find('h3').text
+    url = 'https://scholar.google.com'+citations[0].find('a').get('href')
+    email = citations[0].find(
+        'div', class_=EMAIL_CLASSNAME).text.split()[-1]
+    cit = citations[0].find(
+        'div', class_=CITATION_CLASSNAME).text.split()[-1]
+
+    user_page = get_soup(url)
+
+    paper_url_tags = user_page.find_all('a', class_=PAPER_CLASSNAME) # 20 paper urls
+    # print('https://scholar.google.com'+paper_urls[0].get('href'))
+
+    for paper_url_tag in paper_url_tags:
+        
+        paper_page = get_soup('https://scholar.google.com' + paper_url_tag.get('href'))
+        # abstract = paper_page.find_all('div', class_=BACKGROUND_CLASSNAME)
+        title = paper_page.find('a', class_=PAPER_LINK_CLASSNAME).text
+        paper_link = paper_page.find('a', class_=PAPER_LINK_CLASSNAME).get('href')
+        abstract = paper_page.find('div', class_='gsh_small').text
+
+        file.writerow((name, email, cit, url, title, abstract, paper_link))
 
 
 """ def is_lastpage(soup):
@@ -230,6 +277,28 @@ def print_total_citations_csv(url):
     # AFTER THE LAST ENTRY OF THE LAST PAGE...
     except AttributeError:
         f.close()
+
+    return filename
+
+
+def get_paper_details_csv(url):
+
+    page1 = get_soup(url)
+    filename = ""
+    list_ = page1.find('h2').text.split()
+    institution = ' '.join(list_[0:-2])
+
+    filename = '_'.join(institution.split())+'_Google_Scholar_Papers.csv'
+    f = open(filename, 'w', newline='', encoding="utf-8")
+    file = csv.writer(f)
+
+    file.writerow([institution])
+    file.writerow(['Author', 'Verified Email', 'Total Citations', 'Profile URL', 'Title', 'Abstract', 'Paper URL'])
+
+    currentpage = page1
+
+    get_paper_details(currentpage, file)
+    currentpage = get_nextpage(url, currentpage, index)
 
     return filename
 
