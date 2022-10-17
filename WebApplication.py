@@ -47,7 +47,7 @@ def index():
         # OPTION 4 : ARTICLE DETAILS FILE GENERATION
         else:
             url = request.form['url3']
-            return redirect(url_for("generate_csv", key=get_key(url)))
+            return redirect(url_for("generate_csv_all", key=get_key(url)))
 
     else:
         return render_template('home.html')
