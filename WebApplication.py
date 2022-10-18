@@ -20,6 +20,7 @@ LABEL_CLASSNAME = 'gs_ai_one_int'
 PAPER_CLASSNAME = 'gsc_a_at'
 BACKGROUND_CLASSNAME = 'gsh_csp'
 PAPER_LINK_CLASSNAME = 'gsc_oci_title_link'
+ABSTRACT_CLASSNAME = 'gsh_small'
 
 app = Flask(__name__)
 
@@ -186,29 +187,33 @@ def get_paper_details(soup, file):
     citations = soup.find_all('div', class_=PROFILE_CARD_CLASSNAME)
 
     # FOR EACH PROFILE CARD...
-    # for citation in citations:
+    for citation in citations:
 
-    name = citations[0].find('h3').text
-    url = 'https://scholar.google.com'+citations[0].find('a').get('href')
-    email = citations[0].find(
-        'div', class_=EMAIL_CLASSNAME).text.split()[-1]
-    cit = citations[0].find(
-        'div', class_=CITATION_CLASSNAME).text.split()[-1]
+        name = citation.find('h3').text
+        # print(name)
+        url = 'https://scholar.google.com'+citation.find('a').get('href')
 
-    user_page = get_soup(url)
+        user_page = get_soup(url)
 
-    paper_url_tags = user_page.find_all('a', class_=PAPER_CLASSNAME) # 20 paper urls
-    # print('https://scholar.google.com'+paper_urls[0].get('href'))
+        paper_url_tags = user_page.find_all('a', class_=PAPER_CLASSNAME) # 20 paper urls
 
-    for paper_url_tag in paper_url_tags:
+        for paper_url_tag in paper_url_tags:
         
-        paper_page = get_soup('https://scholar.google.com' + paper_url_tag.get('href'))
-        # abstract = paper_page.find_all('div', class_=BACKGROUND_CLASSNAME)
-        title = paper_page.find('a', class_=PAPER_LINK_CLASSNAME).text
-        paper_link = paper_page.find('a', class_=PAPER_LINK_CLASSNAME).get('href')
-        abstract = paper_page.find('div', class_='gsh_small').text
+            paper_page = get_soup('https://scholar.google.com' + paper_url_tag.get('href'))
+            # abstract = paper_page.find_all('div', class_=BACKGROUND_CLASSNAME)
 
-        file.writerow((name, email, cit, url, title, abstract, paper_link))
+            title = ''
+            paper_link = ''
+            abstract = ''
+            try:
+                title = paper_page.find('a', class_=PAPER_LINK_CLASSNAME).text
+                # print(title)
+                paper_link = paper_page.find('a', class_=PAPER_LINK_CLASSNAME).get('href')
+                abstract = paper_page.find('div', class_=ABSTRACT_CLASSNAME).text
+            except AttributeError:
+                pass
+
+            file.writerow((name, url, title, abstract, paper_link))
 
 
 """ def is_lastpage(soup):
@@ -293,7 +298,7 @@ def get_paper_details_csv(url):
     file = csv.writer(f)
 
     file.writerow([institution])
-    file.writerow(['Author', 'Verified Email', 'Total Citations', 'Profile URL', 'Title', 'Abstract', 'Paper URL'])
+    file.writerow(['Author', 'Profile URL', 'Title', 'Abstract', 'Paper URL'])
 
     currentpage = page1
 
